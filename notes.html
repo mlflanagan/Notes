@@ -1,32 +1,72 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="description" content="Take notes in your browser">
 <title>Notes</title>
 <style>
 body {
-  height: 100%;
-  line-height:1.5;font-size:20px;
-}
-
-textarea {
-    /* maximize make textarea.
-       use 95% vertical height to avoid vertical scrollbar */
-    width: 100%;
-    height: 95vh;
-    
-    /* remove border outline - should work cross-browser */
-    border-style: none; 
-    border-color: Transparent; 
-    overflow: auto;
-    
-    /* set left and right margins */
-    margin: 0 0.25em;
+    background-color: #333;
+    font-family: 'Trebuchet MS','Verdana','Arial','sans-serif';
+    font-size: 1.5em;
+    color: #5e5;
 }
 </style>
 </head>
-<body>
-<textarea placeholder="Type something..."></textarea>
-</body>
-</html>
+<body contenteditable="true" spellcheck="false"></body>
+<script>
+/*global window, document, localStorage */
+(function () {
+    'use strict';
 
+    var NOTES = 'notes';
+
+    function save() {
+        window.localStorage.setItem(NOTES, document.body.innerHTML);
+    }
+
+    window.addEventListener('DOMContentLoaded', function () {
+        // load existing notes, if any
+        var prevNotes = window.localStorage.getItem(NOTES),
+            range,
+            sel;
+            
+        document.body.focus();
+        
+        if (prevNotes !== null && prevNotes !== "<br>") {
+            document.body.innerHTML = prevNotes;
+        } else {
+            document.body.innerHTML = "Start typing something ...";
+            range = document.createRange();
+            range.selectNodeContents(document.body);
+            sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    });
+
+    // autosave notes on exit
+    window.addEventListener("beforeunload",function () {
+        save();
+    });
+    
+    // override ctrl-v/paste behavior
+    document.body.addEventListener('paste', function (event) {
+        event.preventDefault();
+        document.execCommand('inserttext', false, event.clipboardData.getData('text/plain'));
+    });
+
+    // override default keypress behaviors
+    document.body.addEventListener('keydown', function (e) {
+        if (e.code === 'Tab') {
+            // convert tab to four spaces
+            e.preventDefault();
+            document.execCommand('insertText', false, ' '.repeat(4));
+        } else if ((e.ctrlKey || e.metaKey) && String.fromCharCode(e.which).toLowerCase() === 's') {
+            // manually save notes (not the page)
+            e.preventDefault();
+            save();
+        }
+    });
+}());
+</script>
+</html>
