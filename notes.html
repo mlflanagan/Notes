@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en-US"><head>
+<html lang="en-US">
+<head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="description" content="Take notes in your browser">
-<title>Notes</title>
+<title>Test</title>
 <style>
 body {
     background-color: #333;
@@ -10,45 +11,45 @@ body {
     font-size: 1.5em;
     color: #5e5;
 }
+[contentEditable=true]:empty:not(:focus):before {
+  content: attr(placeholder);
+  color: gray;
+  font-style: italic;
+}
 </style>
 </head>
-<body contenteditable="true" spellcheck="false"></body>
+<body>
+<div id="mynotes" contenteditable="true" spellcheck="false" placeholder="Type something ..."></div>
+</body>
 <script>
 /*global window, document, localStorage */
 (function () {
     'use strict';
 
-    var NOTES = 'notes';
+    var NOTES = 'notes2';
 
-    function save() {
-        window.localStorage.setItem(NOTES, document.body.innerHTML);
+    function save(elem) {
+        window.localStorage.setItem(NOTES, elem.innerHTML);
     }
 
+    // load previous notes, if any
     window.addEventListener('DOMContentLoaded', function () {
-        // load existing notes, if any
-        var prevNotes = window.localStorage.getItem(NOTES),
-            range,
-            sel;
-            
-        document.body.focus();
-        
-        if (prevNotes !== null && prevNotes !== "<br>") {
-            document.body.innerHTML = prevNotes;
-        } else {
-            document.body.innerHTML = "Start typing something ...";
-            range = document.createRange();
-            range.selectNodeContents(document.body);
-            sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
+        var myNotes = document.getElementById("mynotes"),
+            prevNotes = window.localStorage.getItem(NOTES);
+        if (prevNotes !== null) {
+            myNotes.focus();
+            myNotes.innerHTML = prevNotes;
+            document.execCommand('selectAll', false, null);
+            document.getSelection().collapseToEnd();
         }
     });
 
     // autosave notes on exit
-    window.addEventListener("beforeunload",function () {
-        save();
+    window.addEventListener("beforeunload", function () {
+        var myNotes = document.getElementById("mynotes");
+        save(myNotes);
     });
-    
+
     // override ctrl-v/paste behavior
     document.body.addEventListener('paste', function (event) {
         event.preventDefault();
@@ -57,6 +58,8 @@ body {
 
     // override default keypress behaviors
     document.body.addEventListener('keydown', function (e) {
+        var myNotes = document.getElementById("mynotes");
+
         if (e.code === 'Tab') {
             // convert tab to four spaces
             e.preventDefault();
@@ -64,7 +67,7 @@ body {
         } else if ((e.ctrlKey || e.metaKey) && String.fromCharCode(e.which).toLowerCase() === 's') {
             // manually save notes (not the page)
             e.preventDefault();
-            save();
+            save(myNotes);
         }
     });
 }());
